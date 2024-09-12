@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time</title>
+
+    <link rel="stylesheet" href="clock.css">   
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@latest/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>    
+    <div class="">
+        <div id="messages" class="container">
+           
+            <h1>Time!</h1> 
+
+            <span id="clock"></span> 
+
+            <select id="time">
+                <option value="0">UTC   </option>
+                <option value="1">UTC +1</option>
+                <option value="2">UTC +2</option>
+                <option value="3">UTC +3</option>
+                <option value="4">UTC +4</option>
+            </select>           
+            
+        </div>
+    </div>
+
+
+    <script>
+        var stompClient = null;
+        var url = "http://localhost:8080";
+
+        function connect() {
+            // Connect to the SockJS endpoint
+            var socket = new SockJS(url+'/websocket');
+            stompClient = Stomp.over(socket);
+
+            // Connect to the STOMP server
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+
+                // Subscribe to the /topic/heyhey endpoint
+                stompClient.subscribe('/topic/clock', function (message) {
+                    showMessage(message.body);  // Display the received message
+                });
+            }, function (error) {
+                console.log('Error: ' + error);
+            });
+        }
+
+        // Display each received message in the DOM
+        function showMessage(message) {
+            var messageElement = document.createElement('p');
+            messageElement.innerText = message;
+            document.getElementById('clock').textContent = message;
+            
+        }
+
+        // Connect to WebSocket on page load
+        window.onload = connect;
+
+        function sendName() {
+            var name = document.getElementById("time").value;
+            stompClient.send("/app/clock", {}, name);
+        }
+
+
+        async function setTimeZone() {
+               
+            let time = document.getElementById("time").value;
+
+        try{   
+            let response = await fetch(url + "/API/time/" + time,  {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',                     
+                },   
+                
+             
+            })
+        }    
+            catch(error){
+                console.error('Error:', error);
+                }     
+        }
+
+        document.getElementById("time").addEventListener("click", async function(event) {
+            sendName();
+        });   
+
+    </script>
+</body>
+</html>
+

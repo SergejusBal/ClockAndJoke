@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joke</title>
+
+    <link rel="stylesheet" href="joke.css">   
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@latest/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>    
+    <div class="">
+        <div id="messages" class="container">
+           
+            <span id="joke"></span>                 
+            
+        </div>
+    </div>
+
+
+    <script>
+        var stompClient = null;
+        var url = "http://localhost:8080";
+
+        function connect() {
+            // Connect to the SockJS endpoint
+            var socket = new SockJS(url+'/websocket');
+            stompClient = Stomp.over(socket);
+
+            // Connect to the STOMP server
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+
+                // Subscribe to the /topic/heyhey endpoint
+                stompClient.subscribe('/topic/joke', function (message) {
+                    showMessage(message.body);  // Display the received message
+                });
+            }, function (error) {
+                console.log('Error: ' + error);
+            });
+        }
+
+        // Display each received message in the DOM
+        function showMessage(message) {        
+            document.getElementById("messages").style.display = "flex";
+            document.getElementById('joke').textContent = message;  
+            setTimeout(function() {  
+                document.getElementById("messages").style.display = "none";  
+            }, 3500);         
+        }
+
+        // Connect to WebSocket on page load
+        window.onload = connect;
+    </script>
+</body>
+</html>
+
